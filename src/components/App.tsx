@@ -8,7 +8,7 @@ function App() {
 
   const handleInputChange = (event: any) => {
     const value = parseInt(event.target.value);
-    let result = value > 50 ? 50 : value; // while <input max="50">, greater numbers can be entered into the input -> ensure maximum of 50 to limit API calls
+    let result = Math.min(value, 50); // while <input max="50">, greater numbers can be entered into the input -> ensure maximum of 50 to limit API calls
     console.log(result);
     setLength(result);
   };
