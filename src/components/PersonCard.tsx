@@ -1,41 +1,38 @@
+import { useQuery } from 'react-query';
 import Card from 'react-bootstrap/Card';
-
-import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
-import { Link } from 'react-router-dom'
-
-const queryClient = new QueryClient()
+import ToggleButton from 'react-bootstrap/ToggleButton';
 
 interface PersonCardProps {
     index: number;
-};
-
-interface CharacterDataProps {
-    person: number;
+    isFavorite: boolean;
+    onFavoriteToggle: (cardIndex: number) => void;
 }
 
-function PersonCard({ index }: PersonCardProps) {
-    return (
-        <QueryClientProvider client={queryClient}>
-            <CharacterData person={index + 1} /> 
-        </QueryClientProvider>
-    );
+interface CharacterData {
+    name: string;
+    height: string;
+    mass: string;
+    eye_color: string;
+    hair_color: string;
+    skin_color: string;
 }
 
-function CharacterData({ person }: CharacterDataProps): JSX.Element {
+function PersonCard({ index, isFavorite, onFavoriteToggle }: PersonCardProps): JSX.Element {
 
-    // e.g. https://swapi.dev/api/people/1
-    const { isLoading, error, data } = useQuery('getPerson_' + person, () =>
-        fetch('https://swapi.dev/api/people/' + person).then(res =>
+    // api starts at 1 not 0
+    const person = index+1;
+
+    const { isLoading, error, data } = useQuery<CharacterData>('getPerson_' + person, () =>
+        fetch('https://swapi.dev/api/people/' + person).then(res => 
             res.json()
         )
     );
 
     if (isLoading) return (<p>Loading...</p>);
 
-    if (error) return (<p>Error.</p>);
+    if (error) return (<p>Error fetching data.</p>);
 
-    // If request returns an empty response...
-    if (!data.name) {
+    if (!data?.name) {
         return (
             <Card style={{ width: '18rem' }}>
                 <Card.Body>
@@ -45,18 +42,33 @@ function CharacterData({ person }: CharacterDataProps): JSX.Element {
         );
     }
 
-    // Populate card with API data
+    const handleFavoriteClick = () => {
+        onFavoriteToggle(index);
+    };
+
     return (
-            <Card style={{ width: '18rem' }} >
-                <Card.Body>
-                    <Card.Title>{data.name}</Card.Title>
-                    <Card.Subtitle className="mb-2 text-muted">{data.height + ' cm, ' + data.mass + ' kg'}</Card.Subtitle>
-                    <Card.Text>
-                        {data.name} has {data.eye_color} eyes, {data.hair_color} hair, and a {data.skin_color} skintone.
-                    </Card.Text>
-                    <Card.Link href={'https://en.wikipedia.org/wiki/' + data.name.replace(/ /g, "_")}>Wikipedia</Card.Link>
-                </Card.Body>
-            </Card>
+        <Card style={{ width: '18rem' }}>
+            <Card.Body>
+                <ToggleButton
+                    id={"favorite-btn-" + person}
+                    variant={isFavorite ? 'primary' : 'outline-primary'}
+                    value={1}
+                    onClick={handleFavoriteClick}
+                >
+                    {isFavorite ? 'Unfavorite' : 'Favorite'}
+                </ToggleButton>
+                <Card.Title>{data.name}</Card.Title>
+                <Card.Subtitle className="mb-2 text-muted">
+                    {data.height} cm, {data.mass} kg
+                </Card.Subtitle>
+                <Card.Text>
+                    {data.name} has {data.eye_color} eyes, {data.hair_color} hair, and a {data.skin_color} skintone.
+                </Card.Text>
+                <Card.Link href={'https://en.wikipedia.org/wiki/' + data.name.replace(/ /g, "_")}>
+                    Wikipedia
+                </Card.Link>
+            </Card.Body>
+        </Card>
     );
 }
 
