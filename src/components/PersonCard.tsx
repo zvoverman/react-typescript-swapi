@@ -1,4 +1,5 @@
-import { useQuery } from 'react-query';
+import React from 'react';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
 import Card from 'react-bootstrap/Card';
 import ToggleButton from 'react-bootstrap/ToggleButton';
 
@@ -9,6 +10,7 @@ interface PersonCardProps {
 }
 
 interface CharacterData {
+    id: string;
     name: string;
     height: string;
     mass: string;
@@ -17,16 +19,57 @@ interface CharacterData {
     skin_color: string;
 }
 
-function PersonCard({ index, isFavorite, onFavoriteToggle }: PersonCardProps): JSX.Element {
+const addPerson = async (id: number, data: CharacterData): Promise<CharacterData> => {
+    data.id = id.toString();
+    const response = await fetch(`https://w5c9dy2dg4.execute-api.us-east-2.amazonaws.com/people`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            "Access-Control-Allow-Origin": "*",
+        },
+        body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+        throw new Error('Network response was not ok');
+    }
+    return response.json();
+}
 
+const deletePerson = async (id: number): Promise<void> => {
+    const response = await fetch(`https://w5c9dy2dg4.execute-api.us-east-2.amazonaws.com/people/${id}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            "Access-Control-Allow-Origin": "*",
+        },
+    });
+    if (!response.ok) {
+        throw new Error('Network response was not ok');
+    }
+}
+
+function PersonCard({ index, isFavorite, onFavoriteToggle }: PersonCardProps): JSX.Element {
+    const queryClient = useQueryClient();
     // api starts at 1 not 0
-    const person = index+1;
+    const person = index + 1;
 
     const { isLoading, error, data } = useQuery<CharacterData>('getPerson_' + person, () =>
-        fetch('https://swapi.dev/api/people/' + person).then(res => 
+        fetch('https://swapi.dev/api/people/' + person).then(res =>
             res.json()
         )
     );
+
+    const addMutation = useMutation((newData: CharacterData) => addPerson(index, newData), {
+        onSuccess: () => {
+            queryClient.invalidateQueries('getPerson_' + person);
+        },
+    });
+
+    const deleteMutation = useMutation(() => deletePerson(index), {
+        onSuccess: () => {
+            queryClient.invalidateQueries('getPerson_' + person);
+        },
+    });
 
     if (isLoading) return (<p>Loading...</p>);
 
@@ -43,6 +86,11 @@ function PersonCard({ index, isFavorite, onFavoriteToggle }: PersonCardProps): J
     }
 
     const handleFavoriteClick = () => {
+        if (isFavorite) {
+            deleteMutation.mutate();
+        } else {
+            addMutation.mutate(data);
+        }
         onFavoriteToggle(index);
     };
 
@@ -54,6 +102,7 @@ function PersonCard({ index, isFavorite, onFavoriteToggle }: PersonCardProps): J
                     variant={isFavorite ? 'primary' : 'outline-primary'}
                     value={1}
                     onClick={handleFavoriteClick}
+                    disabled={addMutation.isLoading || deleteMutation.isLoading}
                 >
                     {isFavorite ? 'Unfavorite' : 'Favorite'}
                 </ToggleButton>
