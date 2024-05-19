@@ -7,6 +7,16 @@ import ToggleButtonGroup from 'react-bootstrap/ToggleButtonGroup';
 
 const queryClient = new QueryClient();
 
+interface CharacterData {
+  id: string;
+  name: string;
+  height: string;
+  mass: string;
+  eye_color: string;
+  hair_color: string;
+  skin_color: string;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -35,11 +45,11 @@ function GetPeople() {
 
   useEffect(() => {
     if (data) {
-      //setFavoriteCards(data.map(person => person.id));
+      setFavoriteCards(data.map(person => parseInt(person.id)));
     }
   }, [data]);
 
-  console.log(data);
+  console.log(favoriteCards);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(event.target.value);

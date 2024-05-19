@@ -20,6 +20,7 @@ interface CharacterData {
 }
 
 const addPerson = async (id: number, data: CharacterData): Promise<CharacterData> => {
+    data.id = id.toString();
     const response = await fetch(`https://w5c9dy2dg4.execute-api.us-east-2.amazonaws.com/people`, {
         method: 'PUT',
         headers: {
@@ -58,13 +59,13 @@ function PersonCard({ index, isFavorite, onFavoriteToggle }: PersonCardProps): J
         )
     );
 
-    const addMutation = useMutation((newData: CharacterData) => addPerson(person, newData), {
+    const addMutation = useMutation((newData: CharacterData) => addPerson(index, newData), {
         onSuccess: () => {
             queryClient.invalidateQueries('getPerson_' + person);
         },
     });
 
-    const deleteMutation = useMutation(() => deletePerson(person), {
+    const deleteMutation = useMutation(() => deletePerson(index), {
         onSuccess: () => {
             queryClient.invalidateQueries('getPerson_' + person);
         },
