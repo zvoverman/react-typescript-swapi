@@ -30,9 +30,9 @@ function GetPeople() {
   const [favoriteCards, setFavoriteCards] = useState<number[]>([]);
   const [showFavorites, setShowFavorites] = useState<boolean>(false);
 
-  const queryClient = useQueryClient()
-
+  // Get list of favorites from dyamoDB
   const { isLoading, error, data } = useQuery<CharacterData[]>('people', () =>
+    // Lambda API Gateway
     fetch('https://w5c9dy2dg4.execute-api.us-east-2.amazonaws.com/people', {
       headers: {
         'Content-Type': 'application/json',
@@ -43,13 +43,16 @@ function GetPeople() {
     )
   );
 
+  // Updates the local favorites list
   useEffect(() => {
     if (data) {
       setFavoriteCards(data.map(person => parseInt(person.id)));
     }
   }, [data]);
 
-  console.log(favoriteCards);
+  if (isLoading) return (<p>Loading...</p>);
+
+  if (error) return (<p>Error fetching data.</p>);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(event.target.value);
