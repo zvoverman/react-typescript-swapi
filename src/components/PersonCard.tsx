@@ -10,7 +10,7 @@ interface PersonCardProps {
 }
 
 interface CharacterData {
-    id: string;
+    id: number;
     name: string;
     height: string;
     mass: string;
@@ -20,7 +20,7 @@ interface CharacterData {
 }
 
 const addPerson = async (id: number, data: CharacterData): Promise<CharacterData> => {
-    data.id = id.toString();
+    data.id = id;
     const response = await fetch(`https://w5c9dy2dg4.execute-api.us-east-2.amazonaws.com/people`, {
         method: 'PUT',
         headers: {

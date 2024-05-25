@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useQueryClient, QueryClient, QueryClientProvider, useQuery } from 'react-query';
+import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
 import './App.css';
 import PersonCard from './PersonCard';
 import ToggleButton from 'react-bootstrap/ToggleButton';
@@ -8,7 +8,7 @@ import ToggleButtonGroup from 'react-bootstrap/ToggleButtonGroup';
 const queryClient = new QueryClient();
 
 interface CharacterData {
-  id: string;
+  id: number;
   name: string;
   height: string;
   mass: string;
@@ -46,7 +46,7 @@ function GetPeople() {
   // Updates the local favorites list
   useEffect(() => {
     if (data) {
-      setFavoriteCards(data.map(person => parseInt(person.id)));
+      setFavoriteCards(data.map(person => person.id));
     }
   }, [data]);
 
