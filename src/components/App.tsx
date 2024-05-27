@@ -26,6 +26,7 @@ function App() {
 }
 
 function GetPeople() {
+  const [query, setQuery] = useState<string>('');
   const [length, setLength] = useState<number>(12);
   const [favoriteCards, setFavoriteCards] = useState<number[]>([]);
   const [showFavorites, setShowFavorites] = useState<boolean>(false);
@@ -54,12 +55,19 @@ function GetPeople() {
 
   if (error) return (<p>Error fetching data.</p>);
 
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLengthInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(event.target.value);
     if (!isNaN(value)) {
       // cap maximum number of cards to limit API calls and ignore invalid data
       let result = Math.min(Math.max(value, 1), 50);
       setLength(result);
+    }
+  };
+
+  const handleQueryInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    if (value !== '' || value !== null) {
+      setQuery(value);
     }
   };
 
@@ -71,14 +79,41 @@ function GetPeople() {
     );
   };
 
+  const searchPeople = async (name: string) => {
+    try {
+      const response = await fetch(`https://w5c9dy2dg4.execute-api.us-east-2.amazonaws.com/people/search?name=${name}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const data = await response.json();
+      console.log(data);
+      setFavoriteCards(data.map((person: { id: number; }) => person.id));
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleQuery = () => {
+    searchPeople(query);
+  }
+
   // Switch between 'All-Items' and 'Favorites'
   const handleToggleChange = (value: number) => {
     setShowFavorites(value === 2);
   };
 
-  const displayedCards = showFavorites
-    ? favoriteCards
-    : Array.from({ length }, (_, index) => index);
+  const displayedCards = !showFavorites
+    ? Array.from({ length }, (_, index) => index)
+    : favoriteCards
+
 
   return (
     <div className="App">
@@ -99,7 +134,7 @@ function GetPeople() {
           type="number"
           id="lengthInput"
           value={length}
-          onChange={handleInputChange}
+          onChange={handleLengthInputChange}
           min="1"
           max="50"
         />
@@ -119,6 +154,16 @@ function GetPeople() {
           Favorites
         </ToggleButton>
       </ToggleButtonGroup>
+
+      {showFavorites &&
+        <div className="App-filter">
+          <label htmlFor="queryInput">Filter Favorites: </label>
+          <input className="queryInput" value={query} onChange={handleQueryInputChange} onKeyUp={(e) => {
+            if (e.key === "Enter") {
+              handleQuery();
+            }
+          }} />
+        </div>}
 
       <div className="App-cards">
         {displayedCards.map(index => (
